@@ -1,1 +1,2 @@
 "# airflow" 
+venv\Scripts\activate
