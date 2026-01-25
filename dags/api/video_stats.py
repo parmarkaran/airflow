@@ -1,15 +1,18 @@
 import requests
 import json
-import os
-from dotenv import load_dotenv
+#import os
+#from dotenv import load_dotenv
 from datetime import date
+from airflow.decorators import task
+from airflow.models import Variable
 
-load_dotenv(dotenv_path="./.env")
+#load_dotenv(dotenv_path="./.env")
 
-api_key = os.getenv("API_KEY")
-channel_handle = "MrBeast"
+api_key = Variable.get("API_KEY")
+channel_handle = Variable.get("channel_handle")
 maxResults = 50
 
+@task
 def get_playlist_id():
 
     try:
@@ -36,6 +39,8 @@ def get_playlist_id():
 
     except requests.exceptions.RequestException as e:
         raise e
+
+@task
 def get_video_ids(playlistId):
     video_ids = []
     pageToken = None
@@ -68,8 +73,7 @@ def get_video_ids(playlistId):
 
     return video_ids
 
-
-        
+@task
 def extract_video_data(video_ids):
     # 1. Safety Check: If video_ids is None or empty, stop immediately
     if not video_ids:
@@ -116,7 +120,7 @@ def extract_video_data(video_ids):
         print(f"An error occurred: {e}")
         return [] # Return empty list on error instead of crashing entirely if you prefer
 
-
+@task
 def save_to_json(extracted_data):
     file_path = f"./data/airflow{date.today()}.json"
     with open(file_path, 'w', encoding='utf-8') as json_outfiles: #w for write mode
