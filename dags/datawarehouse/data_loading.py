@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def load_data():
-    file_path = f"./data/airflow{date.today()}.json"
+    file_path = f"./data/airflow_{date.today()}.json"
 
     try:
         logger.info(f"Processing file: airflow_{date.today()}")
