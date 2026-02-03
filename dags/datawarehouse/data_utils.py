@@ -59,3 +59,4 @@ def get_video_ids(cur, schema):
     ids = cur.fetchall()
     video_ids = [row['video_id'] for row in ids]
     return video_ids
+
