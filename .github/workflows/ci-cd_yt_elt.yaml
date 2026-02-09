@@ -13,7 +13,8 @@ on:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest  
-
+    # NO 'if' condition here at the job level
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -28,6 +29,7 @@ jobs:
         password: ${{ secrets.DOCKERHUB_PASSWORD}}
    
     - name: Build and push Docker image
+      # NO 'if' condition here. It must run.
       run: |
           docker buildx build --push \
             --build-arg AIRFLOW_WWW_USER_PASSWORD=${{ secrets.AIRFLOW_WWW_USER_PASSWORD }} \
@@ -63,34 +65,12 @@ jobs:
     needs: build-and-push-image
     env:
       AIRFLOW_WWW_USER_PASSWORD: ${{ secrets.AIRFLOW_WWW_USER_PASSWORD }}
-      AIRFLOW_WWW_USER_USERNAME: ${{ secrets.AIRFLOW_WWW_USER_USERNAME }}
-      API_KEY: ${{ secrets.API_KEY }}
-      CELERY_BACKEND_NAME: ${{ secrets.CELERY_BACKEND_NAME }}
-      CELERY_BACKEND_PASSWORD: ${{ secrets.CELERY_BACKEND_PASSWORD }}
-      CELERY_BACKEND_USERNAME: ${{ secrets.CELERY_BACKEND_USERNAME }}
-      ELT_DATABASE_NAME: ${{ secrets.ELT_DATABASE_NAME }}
-      ELT_DATABASE_PASSWORD: ${{ secrets.ELT_DATABASE_PASSWORD }}
-      ELT_DATABASE_USERNAME: ${{ secrets.ELT_DATABASE_USERNAME }}
-      FERNET_KEY: ${{ secrets.FERNET_KEY }}
-      METADATA_DATABASE_NAME: ${{ secrets.METADATA_DATABASE_NAME }}
-      METADATA_DATABASE_PASSWORD: ${{ secrets.METADATA_DATABASE_PASSWORD }}
-      METADATA_DATABASE_USERNAME: ${{ secrets.METADATA_DATABASE_USERNAME }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_CONN_USERNAME }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_CONN_PASSWORD }}
-      POSTGRES_CONN_HOST: ${{ secrets.POSTGRES_CONN_HOST }}
-      POSTGRES_CONN_PASSWORD: ${{ secrets.POSTGRES_CONN_PASSWORD }}
-      POSTGRES_CONN_PORT: ${{ secrets.POSTGRES_CONN_PORT }}
-      POSTGRES_CONN_USERNAME: ${{ secrets.POSTGRES_CONN_USERNAME }}
-      AIRFLOW_UID: ${{ vars.AIRFLOW_UID }}
-      CHANNEL_HANDLE: ${{ vars.CHANNEL_HANDLE }}
-      DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
-      DOCKERHUB_REPOSITORY: ${{ vars.DOCKERHUB_REPOSITORY }}
-      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+      # ... (Environment variables are fine) ...
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - name: Get changed files
       id: changed-files-tests
       uses: tj-actions/changed-files@v45
@@ -101,9 +81,10 @@ jobs:
           docker-compose.yaml
           dockerfile
           requirements.txt
+          .github/workflows/** # <--- ADDED THIS: Runs tests when you edit this YAML file
 
-    # Added Login step here to ensure we can pull the private image
     - name: Login to Docker Hub
+      # This condition is fine, but if you want to FORCE it, you can remove the 'if' here too.
       if: steps.changed-files-tests.outputs.any_changed == 'true'
       uses: docker/login-action@v3
       with:
@@ -114,12 +95,12 @@ jobs:
       if: steps.changed-files-tests.outputs.any_changed == 'true'
       run: |
         docker-compose up -d
-
+        
     - name: Run Unit and Integration Tests
       if: steps.changed-files-tests.outputs.any_changed == 'true'
       run: |
         docker exec -t airflow-worker sh -c "pytest tests/ -v"
-
+        
     - name: Run E2E Tests
       if: steps.changed-files-tests.outputs.any_changed == 'true'
       run: |
@@ -127,7 +108,7 @@ jobs:
         for DAG_NAME in "${DAG_NAMES[@]}"; do
           docker exec -t airflow-worker sh -c "airflow dags test $DAG_NAME"
         done
-
+        
     - name: Stop Docker Compose
       if: steps.changed-files-tests.outputs.any_changed == 'true'
       run: |
