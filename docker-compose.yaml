@@ -137,7 +137,7 @@ services:
       - ./scripts/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     # Test connection to 1 of 3 dbs, the metadata db in this case
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_CONN_USERNAME}", "-d", "${METADATA_DATABASE_NAME}" ]
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_CONN_USERNAME:-postgres}", "-d", "${METADATA_DATABASE_NAME:-airflow_metadata_db}" ]
       interval: 10s
       retries: 5
       start_period: 5s
