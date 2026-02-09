@@ -40,7 +40,6 @@ jobs:
     - name: Build and push Docker image
       if: steps.changed-files-build.outputs.any_changed == 'true'
       run: |
-        # Using a single line for the build command to avoid whitespace errors
         docker buildx build --push \
           --build-arg AIRFLOW_WWW_USER_PASSWORD=${{ secrets.AIRFLOW_WWW_USER_PASSWORD }} \
           --build-arg AIRFLOW_WWW_USER_USERNAME=${{ secrets.AIRFLOW_WWW_USER_USERNAME }} \
