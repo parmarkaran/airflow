@@ -100,14 +100,17 @@ jobs:
         username: ${{ vars.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD}}
 
-    # --- THIS IS THE NEW FIX ---
-    # 1. Takes your 'ENV_FILE' secret (containing all your vars) and writes it to .env
-    # 2. Appends 'trust' auth method to ensure DB starts even if passwords are tricky
+    # 1. Takes your 'ENV_FILE' secret and writes it to .env
+    # 2. Strips Windows carriage returns that break Linux parsing
+    # 3. Adds trust auth for postgres
     - name: Create .env file from Secret
       run: |
-        echo "${{ secrets.ENV_FILE }}" > .env
+        echo "${{ secrets.ENV_FILE }}" | tr -d '\r' > .env
         echo "POSTGRES_HOST_AUTH_METHOD=trust" >> .env
-        ls -la .env
+        echo "=== .env file debug (first 5 lines) ==="
+        head -5 .env
+        echo "=== Checking POSTGRES_CONN_PORT ==="
+        grep POSTGRES_CONN_PORT .env || echo "WARNING: POSTGRES_CONN_PORT not found!"
 
     - name: Set up Docker Compose
       run: |
