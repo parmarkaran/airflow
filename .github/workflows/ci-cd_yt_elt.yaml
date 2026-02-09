@@ -77,6 +77,8 @@ jobs:
       METADATA_DATABASE_USERNAME: ${{ secrets.METADATA_DATABASE_USERNAME }}
       POSTGRES_USER: ${{ secrets.POSTGRES_CONN_USERNAME }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_CONN_PASSWORD }}
+      # Explicitly set default DB to aid health checks
+      POSTGRES_DB: ${{ secrets.METADATA_DATABASE_NAME }}
       POSTGRES_CONN_HOST: ${{ secrets.POSTGRES_CONN_HOST }}
       POSTGRES_CONN_PASSWORD: ${{ secrets.POSTGRES_CONN_PASSWORD }}
       POSTGRES_CONN_PORT: ${{ secrets.POSTGRES_CONN_PORT }}
@@ -100,6 +102,11 @@ jobs:
     - name: Set up Docker Compose
       run: |
         docker compose up -d
+
+    # DEBUG STEP: Prints logs only if the previous step fails or containers are unhealthy
+    - name: Debug Postgres Failure
+      if: failure()
+      run: docker compose logs postgres
         
     - name: Run Unit and Integration Tests
       run: |
@@ -113,5 +120,6 @@ jobs:
         done
         
     - name: Stop Docker Compose
+      if: always()
       run: |
         docker compose down
