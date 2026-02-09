@@ -1,0 +1,22 @@
+# Ignore the virtual environment
+venv/
+.venv/
+
+# Ignore local logs (Fixes your error)
+logs/
+
+# Ignore local database and config (You want a fresh start in the container)
+airflow.db
+airflow.cfg
+webserver_config.py
+standalone_admin_password.txt
+
+# Ignore git history and IDE settings
+.git/
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+
+# Ignore environment variables (security risk to bake these in)
+.env

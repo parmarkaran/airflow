@@ -6,53 +6,68 @@ table = "yt_api"
 def insert_rows(cur, conn, schema, row):
     try:
         if schema == 'staging':
-            # STAGING SCHEMA
-            # We must use \"quotes\" around columns to match the case-sensitive table definition
-            cur.execute(f"""INSERT INTO {schema}.{table} (
-                "video_id",
-                "VIDEO_title",
-                "upload_date",
-                "duration",
-                "VIDEO_VIEWS",
-                "LIKES_COUNT",
-                "COMMENTS_COUNT"
-            ) VALUES (
-                %(video_id)s,
-                %(title)s,
-                %(published_at)s,
-                %(duration)s,
-                %(view_count)s,
-                %(like_count)s,
-                %(comment_count)s
-            );""", row)
+            # STAGING SCHEMA: Insert or Update if exists
+            cur.execute(f"""
+                INSERT INTO {schema}.{table} (
+                    "video_id",
+                    "VIDEO_title",
+                    "upload_date",
+                    "duration",
+                    "VIDEO_VIEWS",
+                    "LIKES_COUNT",
+                    "COMMENTS_COUNT"
+                ) VALUES (
+                    %(video_id)s,
+                    %(title)s,
+                    %(published_at)s,
+                    %(duration)s,
+                    %(view_count)s,
+                    %(like_count)s,
+                    %(comment_count)s
+                )
+                ON CONFLICT ("video_id") DO UPDATE SET
+                    "VIDEO_title" = EXCLUDED."VIDEO_title",
+                    "VIDEO_VIEWS" = EXCLUDED."VIDEO_VIEWS",
+                    "LIKES_COUNT" = EXCLUDED."LIKES_COUNT",
+                    "COMMENTS_COUNT" = EXCLUDED."COMMENTS_COUNT",
+                    "upload_date" = EXCLUDED."upload_date";
+            """, row)
             
         else:
-            # CORE SCHEMA (Also uses quoted identifiers)
-            cur.execute(f"""INSERT INTO {schema}.{table} (
-                "video_id",
-                "VIDEO_title",
-                "upload_date",
-                "duration",
-                "VIDEO_TYPE",
-                "VIDEO_VIEWS",
-                "LIKES_COUNT",
-                "COMMENTS_COUNT"
-            ) VALUES (
-                %(video_id)s,
-                %(video_title)s,
-                %(upload_date)s,
-                %(duration)s,
-                %(video_type)s,
-                %(video_views)s,
-                %(likes_count)s,
-                %(comments_count)s
-            );""", row)
+            # CORE SCHEMA: Insert or Update if exists
+            cur.execute(f"""
+                INSERT INTO {schema}.{table} (
+                    "video_id",
+                    "VIDEO_title",
+                    "upload_date",
+                    "duration",
+                    "VIDEO_TYPE",
+                    "VIDEO_VIEWS",
+                    "LIKES_COUNT",
+                    "COMMENTS_COUNT"
+                ) VALUES (
+                    %(video_id)s,
+                    %(video_title)s,
+                    %(upload_date)s,
+                    %(duration)s,
+                    %(video_type)s,
+                    %(video_views)s,
+                    %(likes_count)s,
+                    %(comments_count)s
+                )
+                ON CONFLICT ("video_id") DO UPDATE SET
+                    "VIDEO_title" = EXCLUDED."VIDEO_title",
+                    "VIDEO_VIEWS" = EXCLUDED."VIDEO_VIEWS",
+                    "LIKES_COUNT" = EXCLUDED."LIKES_COUNT",
+                    "COMMENTS_COUNT" = EXCLUDED."COMMENTS_COUNT",
+                    "VIDEO_TYPE" = EXCLUDED."VIDEO_TYPE";
+            """, row)
         
         conn.commit()
-        logger.info(f"Inserted row for video_id: {row['video_id']} ")
+        logger.info(f"Upserted row for video_id: {row['video_id']} ")
     
     except Exception as e:
-        logger.error(f"Error inserting row for video_id: {row.get('video_id', 'unknown')}")
+        logger.error(f"Error upserting row for video_id: {row.get('video_id', 'unknown')}")
         raise e
     
 def update_rows(cur, conn, schema, row):

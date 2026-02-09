@@ -1,0 +1,20 @@
+checks for yt_api:
+  - missing_count("video_id") = 0
+  - duplicate_count("video_id") = 0
+
+  # Custom Check 1: Count Likes > Views
+  - likes_errors = 0:
+      name: Check for likes count greater than video views
+      # The key below MUST match the variable name used in the check definition (likes_errors) followed by ' query'
+      likes_errors query: |
+        SELECT COUNT(*) 
+        FROM yt_api 
+        WHERE "LIKES_COUNT" > "VIDEO_VIEWS"
+
+  # Custom Check 2: Count Comments > Views
+  - comments_errors = 0:
+      name: Check for comments count greater than video views
+      comments_errors query: |
+        SELECT COUNT(*) 
+        FROM yt_api 
+        WHERE "COMMENTS_COUNT" > "VIDEO_VIEWS"
